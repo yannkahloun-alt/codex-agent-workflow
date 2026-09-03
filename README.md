@@ -81,3 +81,30 @@ The coordinator records the directory boundary, inspects the changed files or a
 before/after comparison, reports validation, and hands off the files while
 stating that branch, commit, push, and pull-request steps were unavailable.
 
+## Post-merge cleanup examples
+
+Normal cleanup follows a confirmed successful merge. The coordinator verifies
+that the ticket commits are preserved in the target branch, switches the
+primary worktree to a non-ticket branch, confirms the recorded ticket worktree
+is clean, removes that worktree, safely deletes the local ticket branch, and
+prunes or equivalently refreshes remote-tracking references. For example:
+
+```text
+PR #123 merged; ticket commits are reachable from the updated default branch.
+Primary worktree: main (usable and clean).
+Removed clean ticket-owned worktree: ../consumer-issue-123
+Deleted merged local branch: codex/issue-123
+Pruned remote-tracking references.
+```
+
+Cleanup is guarded when local work is not proven safe to remove. For example:
+
+```text
+PR #123 merged successfully.
+Cleanup skipped: ../consumer-issue-123 contains untracked notes.txt, and the
+local ticket branch has one commit not proven reachable from preserved history.
+The ticket-owned worktree and branch were left intact for recovery; unrelated
+worktrees and branches were not touched. Refreshing remote-tracking references
+succeeded. The merge result is unchanged; local cleanup requires follow-up.
+```
+

@@ -20,7 +20,7 @@ agents or approve routine transitions.
 - own the Git and workspace boundary: choose the authoritative checkout,
   isolate work as policy requires, integrate delegated file changes, inspect
   the final diff, and perform authorized branch, commit, push, and pull-request
-  operations;
+  operations, including guarded cleanup after a successful merge;
 - keep delegated agents' write scope explicit and do not imply that a
   file-editing assignment transfers repository or Git ownership.
 
@@ -72,4 +72,27 @@ metadata, the coordinator remains responsible for repository state:
 In either case, delegated agents must not initialize a repository, select a
 different checkout, or claim Git completion unless the coordinator explicitly
 transfers that authority under higher-priority project policy.
+
+## Post-merge cleanup
+
+After a pull request merges successfully, the coordinator must explicitly
+follow the merge with an attempt to clean up only the local branch and worktree
+created for that ticket. Cleanup is a separate post-merge step: a cleanup
+failure does not undo or change the reported merge result, but its exact state
+and required follow-up belong in the final handoff.
+
+Before deleting anything, verify from the repository's source of truth that the
+pull request merged and that the ticket branch's work is present in the
+preserved target history. Refresh or prune remote-tracking references so local
+state does not imply that a deleted remote branch still exists. Ensure the
+primary or default worktree is usable and checked out on a non-ticket branch.
+
+Remove a ticket-owned worktree only when it has no uncommitted or untracked
+files, then delete its local ticket branch only when the branch is merged or its
+commits are otherwise proven preserved. Uncommitted, untracked, or unmerged
+work blocks destructive cleanup: preserve the affected worktree and branch and
+report the evidence instead of forcing removal or deletion. Do not clean up
+worktrees, branches, or files merely because their names resemble the ticket;
+their ownership must be established from the lifecycle the coordinator
+created or recorded.
 
