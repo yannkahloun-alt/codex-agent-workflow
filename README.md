@@ -125,7 +125,33 @@ End to end, with Git available:
 > **Coordinator:** Resolves the issue and repository policy, chooses and
 > coordinates implementation and review roles, owns the isolated checkout and
 > Git operations, validates the final diff, and completes the normal pull-request
-> lifecycle without asking the user to select roles or approve routine steps.
+> lifecycle, including the repository-prescribed merge once every required gate
+> passes, without asking the user to select roles or approve routine steps.
+
+Autonomous merge under the repository's normal policy:
+
+```text
+User: Work on ticket #123.
+Coordinator: Validation and required CI passed at head abc123; a fresh
+independent reviewer approved that exact head with no unresolved findings.
+Repository policy permits agent-driven merge, so PR #123 was merged and normal
+post-merge cleanup followed.
+```
+
+Human approval required by higher-priority consuming policy:
+
+```text
+User: Work on ticket #123.
+Coordinator: Validation, CI, and independent review passed at head abc123, but
+the consuming repository requires a human to approve merge. PR #123 is ready;
+merge and post-merge cleanup are blocked pending that approval.
+```
+
+Any commit after review requires validation as applicable and a new independent
+verdict for the new exact head. Failed or incomplete gates and unresolved review
+findings block merge. Issue-handoff merge authority remains limited to the named
+ticket and does not authorize release, deployment, publication, unrelated work,
+or destructive actions outside guarded normal post-merge cleanup.
 
 File-only delegation, with Git available only to the coordinator:
 
