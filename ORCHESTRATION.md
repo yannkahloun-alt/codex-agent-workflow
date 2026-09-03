@@ -128,6 +128,32 @@ In either case, delegated agents must not initialize a repository, select a
 different checkout, or claim Git completion unless the coordinator explicitly
 transfers that authority under higher-priority project policy.
 
+## Ticket worktree placement and ownership
+
+Create ticket worktrees outside the primary repository working tree by default,
+for example as a sibling directory or under another coordinator-managed
+external root. The path need not follow a particular naming convention. The
+invariant is that it is not beneath the primary checkout unless higher-priority
+repository or environment policy explicitly requires that layout. Creating the
+worktree must not by itself introduce untracked state into the primary
+checkout.
+
+At creation time, retain lifecycle state that ties the resource to the ticket:
+
+- the ticket or issue identity;
+- the exact absolute worktree path;
+- the exact local ticket branch; and
+- the authoritative repository identity and Git worktree registration.
+
+Carry this state through delegation, merge, cleanup, and final handoff. Names
+such as `.worktrees`, `issue-123`, or `codex/*` are organizational labels, not
+ownership evidence. Before removal, compare the recorded identity with current
+`git worktree list --porcelain` metadata from the authoritative repository and
+verify that the exact path is still registered there with the expected branch,
+or with an equivalent detached state whose ticket commits are proven preserved.
+Do not remove a path that is absent, registered to another repository, or
+associated with an unexpected branch.
+
 ## Post-merge cleanup
 
 After a pull request merges successfully, the coordinator must explicitly
@@ -138,20 +164,37 @@ and required follow-up belong in the final handoff.
 
 Before deleting anything, verify from the repository's source of truth that the
 pull request merged and that the ticket branch's work is present in the
-preserved target history. Refresh or prune remote-tracking references so local
-state does not imply that a deleted remote branch still exists. Update the
-primary or default worktree to the merged target history, or verify that it is
-already current with that history, and ensure it is usable on a non-ticket
-branch. Uncommitted, untracked, or diverged state in that worktree blocks the
-update and destructive cleanup; preserve and report that state instead of
-overwriting it.
+preserved target history. Validate the exact recorded worktree path, repository,
+and branch against Git's registered-worktree metadata, then confirm that ticket
+worktree has no uncommitted or untracked files. Higher-priority repository
+policy may impose additional removal guards. Inspect the primary or default
+worktree as well: genuine uncommitted, untracked, or diverged state there blocks
+destructive cleanup.
 
-Remove a ticket-owned worktree only when it has no uncommitted or untracked
-files, then delete its local ticket branch only when the branch is merged or its
-commits are otherwise proven preserved. Uncommitted, untracked, or unmerged
-work blocks destructive cleanup: preserve the affected worktree and branch and
-report the evidence instead of forcing removal or deletion. Do not clean up
-worktrees, branches, or files merely because their names resemble the ticket;
-their ownership must be established from the lifecycle the coordinator
-created or recorded.
+Remove the verified ticket worktree before updating the primary or default
+worktree when a legacy workflow-created worktree beneath the primary checkout
+is itself the only untracked-path blocker. This bounded exception does not apply
+when the primary worktree has any other local state. After removal, remove its
+container directory only if the workflow created that exact container and it is
+actually empty; leave any unrelated files or directories untouched. Never
+recursively delete a container based on a name such as `.worktrees`.
+
+Refresh or prune remote-tracking references so local state does not imply that
+a deleted remote branch still exists. Update the primary or default worktree to
+the merged target history, or verify that it is already current with that
+history, and ensure it is usable on a non-ticket branch. Uncommitted, untracked,
+or diverged state in that worktree blocks the update and further destructive
+cleanup unless the only reported untracked state was the now-removed, exactly
+verified legacy worktree/container. Preserve and report all other state instead
+of overwriting it.
+
+Delete the exact local ticket branch only after its worktree is removed and the
+branch is merged or its commits are otherwise proven preserved. Uncommitted,
+untracked, or unmerged work blocks destructive cleanup: preserve the affected
+worktree and branch and report the evidence instead of forcing removal or
+deletion. Do not clean up worktrees, branches, or files merely because their
+names resemble the ticket; their ownership must be established from recorded
+lifecycle identity and current Git metadata. Final handoff must report cleanup
+completion or the exact ownership, registration, branch, cleanliness, policy,
+or primary-worktree condition that prevented it.
 

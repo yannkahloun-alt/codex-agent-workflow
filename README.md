@@ -44,6 +44,13 @@ the delegated roles exist; see the coordinator preflight in
 above is the normal recovery step rather than a reason to bypass the pinned
 revision.
 
+Create ticket worktrees outside the primary checkout by default. A sibling
+directory is one simple option, as shown above; a coordinator-managed external
+root is equally valid. Record the ticket identity, exact absolute worktree path,
+exact local branch, and authoritative repository/worktree registration when the
+worktree is created. Directory and branch naming conventions are not proof of
+ownership.
+
 ## Keep the pinned workflow current before a ticket
 
 Before starting a new ticket, compare the recorded submodule gitlink with the
@@ -139,10 +146,11 @@ stating that branch, commit, push, and pull-request steps were unavailable.
 
 Normal cleanup follows a confirmed successful merge. The coordinator verifies
 that the ticket commits are preserved in the target branch, updates or verifies
-the primary worktree at that target history on a non-ticket branch, confirms
-the recorded ticket worktree is clean, removes that worktree, safely deletes
-the local ticket branch, and prunes or equivalently refreshes remote-tracking
-references. For example:
+the exact recorded path and branch against the authoritative repository's
+registered-worktree metadata, confirms the ticket worktree is clean, removes
+that worktree, safely deletes the local ticket branch, prunes or equivalently
+refreshes remote-tracking references, and leaves the primary worktree at the
+merged target history on a non-ticket branch. For example:
 
 ```text
 PR #123 merged; ticket commits are reachable from the updated default branch.
@@ -151,6 +159,36 @@ Removed clean ticket-owned worktree: ../consumer-issue-123
 Deleted merged local branch: codex/issue-123
 Pruned remote-tracking references.
 ```
+
+A legacy in-repository worktree can make the primary checkout appear dirty:
+
+```text
+C:\_dev\consumer\
+  .worktrees\
+    issue-7\
+```
+
+Do not hide `.worktrees/` in `.gitignore` or exempt it from untracked-state
+checks. If lifecycle state identifies that exact path and branch, Git still
+registers the path for the authoritative repository with the expected branch,
+the pull request is merged and preserved, and the ticket worktree is clean,
+remove that exact registered worktree. Remove the workflow-created `.worktrees`
+container only if it is then empty. Leave unrelated contents untouched. With
+the sole untracked-path blocker gone, refresh the primary checkout and finish
+the normal sequence:
+
+```text
+PR #8 merged; issue-7 commits are reachable from origin/main.
+Verified registered worktree C:\_dev\consumer\.worktrees\issue-7 on
+codex/issue-7 from recorded lifecycle ownership; worktree is clean.
+Removed that exact worktree and its now-empty workflow-created container.
+Deleted merged local branch codex/issue-7 and pruned/refreshed refs.
+Primary worktree: main (clean and current with origin/main).
+```
+
+If the container holds any unrelated file or directory, preserve the container
+and those contents. Genuine uncommitted or untracked user work in either
+worktree continues to block the applicable destructive cleanup.
 
 Cleanup is guarded when local work is not proven safe to remove. For example:
 
