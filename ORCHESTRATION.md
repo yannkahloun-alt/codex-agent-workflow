@@ -29,6 +29,61 @@ or unrelated historical context. Several tightly related changes may share an
 agent when their common context materially helps; unrelated work should use
 fresh context.
 
+## Pre-ticket workflow freshness
+
+In a consuming repository, resolve workflow freshness before creating the
+ticket branch or worktree and before delegating ticket work. This check applies
+only to tickets that have not started. Never change the workflow gitlink in a
+running ticket worktree; it continues with the exact known-good revision with
+which it began.
+
+Consumer policy must identify the workflow submodule path, its authoritative
+upstream repository, and a deterministic approved-stable selector. Prefer
+published stable tags or releases. A suitable default is the greatest stable
+Semantic Version tag in the fetched tag set, excluding prereleases; policy may
+instead name an approved release series or an exact approved tag. Resolve the
+selected tag to a commit and use that exact commit throughout the comparison,
+proposal, and merge. Do not treat a remote default branch, a moving branch, or
+an unrecorded notion of "latest" as an approved source.
+
+Run the freshness lifecycle from a clean, refreshed default branch:
+
+1. Read the exact workflow gitlink recorded by the consuming repository and
+   resolve the approved-stable source to an exact candidate commit.
+2. If the source cannot be reached or the approved selector cannot be resolved,
+   record the lookup failure and continue the ticket from the pinned known-good
+   commit. Consumer policy may explicitly require this condition to block.
+3. If the candidate equals the gitlink, make no workflow change and proceed
+   with the ticket.
+4. A differing candidate is eligible for an automatic bump only when it is
+   provably a descendant of the pinned commit. If it is older, belongs to a
+   divergent history, or ancestry cannot be established, do not adopt it
+   automatically. Report the condition and continue from the pin unless
+   consumer policy requires a block or a separately authorized manual
+   reconciliation.
+5. For an eligible newer candidate, reconcile any existing workflow-bump pull
+   requests before creating one. The proposal identity is the tuple of workflow
+   path, old gitlink, and exact candidate commit. Reuse the lowest-numbered open
+   pull request with that exact identity and treat later matches as duplicates;
+   refresh state before creation so concurrent coordinators do not knowingly
+   create another proposal. Consumer policy controls whether duplicate or stale
+   proposals are closed, but selection of the proposal to continue must remain
+   deterministic.
+6. Create or update a dedicated workflow-bump branch and pull request from the
+   refreshed default branch. Change only the submodule pointer to the exact
+   candidate, then run the consuming repository's required validation and
+   independent review. Merge only under its normal merge policy. A candidate
+   that fails validation or review leaves the consuming repository's pin
+   unchanged; continue from the pinned revision unless consumer policy says to
+   block, and report the rejected candidate.
+7. After a successful bump merge, refresh the consuming repository's default
+   branch and repeat the exact-pin comparison. Only then create the ticket
+   branch or worktree and perform the delegation preflight below.
+
+When this repository is itself the configured workflow source, skip this
+consumer update lifecycle. It must not open a recursive workflow-bump proposal
+against itself.
+
 ## Consuming-repository preflight
 
 Before delegating work, verify from the consuming repository that its configured
