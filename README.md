@@ -44,16 +44,70 @@ the delegated roles exist; see the coordinator preflight in
 above is the normal recovery step rather than a reason to bypass the pinned
 revision.
 
-## Update the pinned workflow
+## Keep the pinned workflow current before a ticket
 
-Fetch the submodule, check out the reviewed tag or commit, validate the consuming
-project, and commit the changed submodule pointer. Never track an unpinned
-floating branch as the effective workflow version.
+Before starting a new ticket, compare the recorded submodule gitlink with the
+exact commit selected by the consuming project's deterministic approved-stable
+source. Prefer published stable tags or releases; for example, policy can select
+the greatest non-prerelease Semantic Version tag in fetched tags, or an exact
+approved tag. Never use a remote default branch or another floating ref as the
+effective workflow version.
+
+A different commit is not necessarily newer. Automatically propose it only
+when its exact commit is provably a descendant of the current pin. An older,
+divergent, or ancestry-unverifiable candidate leaves the pin unchanged and is
+reported for consumer-policy handling or separately authorized manual
+reconciliation.
+
+An already-current pin is a no-op:
+
+```text
+Pinned workflow: 0123456789abcdef (workflow path .agent-workflow)
+Approved stable:  0123456789abcdef (tag v1.4.0)
+No bump required; create the ticket worktree from the refreshed default branch.
+```
+
+When an eligible newer approved commit exists, update it separately from ticket
+work:
+
+```text
+Pinned workflow: 0123456789abcdef
+Approved stable:  fedcba9876543210 (tag v1.5.0)
+Reconciled or opened the dedicated workflow-bump branch and pull request,
+changed only the gitlink, and ran the consumer's validation and independent
+review. After merge, refreshed the default branch and rechecked the exact pin;
+ticket work may now start.
+```
+
+If the stable source is unreachable, preserve availability by default:
+
+```text
+Approved-stable lookup failed: upstream unavailable.
+The pin remains 0123456789abcdef, the last known-good workflow revision.
+Proceeding with the ticket; consumer policy may instead require this to block.
+```
+
+A candidate that fails the consuming repository's gates is not adopted:
+
+```text
+Candidate fedcba9876543210 failed consumer validation.
+The pin remains 0123456789abcdef; the ticket continues on that known-good
+revision unless consumer policy requires a block.
+```
+
+Identify bump proposals by workflow path, old gitlink, and exact candidate
+commit. Reuse the lowest-numbered open pull request with the same identity and
+treat later matches as duplicates, subject to the consumer's close policy. This
+makes retries and concurrent checks converge without changing a running ticket.
+The full lifecycle, including validation, review, merge, default-branch refresh,
+and the source repository's recursive-update exclusion, is specified in
+`ORCHESTRATION.md`.
 
 ## Versioning
 
-Published tags identify stable workflow revisions. Consumers remain pinned until
-they explicitly review and commit an update.
+Published tags identify stable workflow revisions. Consumers remain exactly
+pinned while the pre-ticket lifecycle validates, reviews, and commits any
+approved update.
 
 ## Issue handoff examples
 
