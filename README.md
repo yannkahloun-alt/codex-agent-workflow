@@ -55,3 +55,29 @@ floating branch as the effective workflow version.
 Published tags identify stable workflow revisions. Consumers remain pinned until
 they explicitly review and commit an update.
 
+## Issue handoff examples
+
+End to end, with Git available:
+
+> **User:** Work on ticket #123.
+>
+> **Coordinator:** Resolves the issue and repository policy, chooses and
+> coordinates implementation and review roles, owns the isolated checkout and
+> Git operations, validates the final diff, and completes the normal pull-request
+> lifecycle without asking the user to select roles or approve routine steps.
+
+File-only delegation, with Git available only to the coordinator:
+
+> **Coordinator to implementation agent:** In the supplied workspace, edit only
+> `docs/usage.md` for ticket #123 and report the changed files and validation.
+> Do not perform Git operations.
+>
+> **Coordinator:** Integrates or observes those file changes in the authoritative
+> checkout, inspects the diff, validates, and performs the authorized Git and
+> pull-request steps.
+
+If neither workspace has Git metadata, the same delegation remains file-only.
+The coordinator records the directory boundary, inspects the changed files or a
+before/after comparison, reports validation, and hands off the files while
+stating that branch, commit, push, and pull-request steps were unavailable.
+

@@ -14,6 +14,11 @@ isolated branch or worktree.
 9. Commit, push, and open or update the pull request as project policy requires.
 10. Provide a concise handoff and end this implementation lifecycle.
 
+The coordinator may explicitly assign file-only work. In that case, edit only
+the named workspace and file scope, report every changed file and validation
+result, and leave Git operations to the coordinator. Absence of Git metadata
+does not authorize initializing a repository or substituting another checkout.
+
 If selected work is deferred, follow the consuming project's issue-history and
 communication rules before switching tasks.
 
