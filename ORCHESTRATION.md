@@ -84,8 +84,12 @@ and required follow-up belong in the final handoff.
 Before deleting anything, verify from the repository's source of truth that the
 pull request merged and that the ticket branch's work is present in the
 preserved target history. Refresh or prune remote-tracking references so local
-state does not imply that a deleted remote branch still exists. Ensure the
-primary or default worktree is usable and checked out on a non-ticket branch.
+state does not imply that a deleted remote branch still exists. Update the
+primary or default worktree to the merged target history, or verify that it is
+already current with that history, and ensure it is usable on a non-ticket
+branch. Uncommitted, untracked, or diverged state in that worktree blocks the
+update and destructive cleanup; preserve and report that state instead of
+overwriting it.
 
 Remove a ticket-owned worktree only when it has no uncommitted or untracked
 files, then delete its local ticket branch only when the branch is merged or its

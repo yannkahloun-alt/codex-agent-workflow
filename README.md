@@ -84,14 +84,15 @@ stating that branch, commit, push, and pull-request steps were unavailable.
 ## Post-merge cleanup examples
 
 Normal cleanup follows a confirmed successful merge. The coordinator verifies
-that the ticket commits are preserved in the target branch, switches the
-primary worktree to a non-ticket branch, confirms the recorded ticket worktree
-is clean, removes that worktree, safely deletes the local ticket branch, and
-prunes or equivalently refreshes remote-tracking references. For example:
+that the ticket commits are preserved in the target branch, updates or verifies
+the primary worktree at that target history on a non-ticket branch, confirms
+the recorded ticket worktree is clean, removes that worktree, safely deletes
+the local ticket branch, and prunes or equivalently refreshes remote-tracking
+references. For example:
 
 ```text
 PR #123 merged; ticket commits are reachable from the updated default branch.
-Primary worktree: main (usable and clean).
+Primary worktree: main (usable, clean, and current with merged target history).
 Removed clean ticket-owned worktree: ../consumer-issue-123
 Deleted merged local branch: codex/issue-123
 Pruned remote-tracking references.
@@ -107,4 +108,8 @@ The ticket-owned worktree and branch were left intact for recovery; unrelated
 worktrees and branches were not touched. Refreshing remote-tracking references
 succeeded. The merge result is unchanged; local cleanup requires follow-up.
 ```
+
+A dirty or diverged primary worktree is guarded the same way: do not overwrite
+it to update the target branch, do not continue destructive cleanup, and report
+the preserved local state and required follow-up.
 
