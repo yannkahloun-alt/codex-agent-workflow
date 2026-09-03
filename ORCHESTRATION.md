@@ -24,6 +24,29 @@ agents or approve routine transitions.
 - keep delegated agents' write scope explicit and do not imply that a
   file-editing assignment transfers repository or Git ownership.
 
+## Guarded ticket merge
+
+An issue handoff such as `work on ticket #N` authorizes the coordinator to
+perform the consuming repository's prescribed merge for that named ticket. The
+authorization is conditional, not a waiver: every required local validation,
+CI, branch-protection, and independent-review gate must pass, and repository
+policy must permit agent-driven merge. Failed or incomplete checks,
+unverifiable evidence, merge conflicts, or unresolved review findings block the
+merge and must be reported rather than bypassed.
+
+Tie the independent-review verdict to the pull request's exact head commit.
+After any implementation change or new commit, invalidate the earlier verdict,
+repeat affected validation, and obtain a fresh independent review of the new
+exact head before merging. Refresh the source-of-truth state immediately before
+merge so a stale verdict or newly failing gate cannot be treated as sufficient.
+
+Higher-priority consuming policy may require separate human merge approval. In
+that case, prepare the otherwise merge-ready pull request and stop at the human
+approval gate. Neither form of merge authority includes release, deployment,
+publication, unrelated changes, destructive cleanup beyond the guarded normal
+post-merge cleanup below, credential changes, or any other separately governed
+action.
+
 Avoid absorbing full implementation transcripts, exhaustive logs, large diffs,
 or unrelated historical context. Several tightly related changes may share an
 agent when their common context materially helps; unrelated work should use

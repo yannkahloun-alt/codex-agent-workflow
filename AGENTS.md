@@ -29,17 +29,21 @@ and should be followed directly.
 A prompt such as `work on ticket #N` is sufficient authorization to carry that
 issue through its full repository-defined lifecycle: inspect the issue and
 policy, implement it, validate it, arrange independent review when required,
-and perform the repository's normal Git and pull-request steps. Do not ask the
-user to choose an agent role or separately approve each routine lifecycle step.
-Role selection and delegation are internal workflow decisions. The coordinator
-retains ownership of Git and workspace boundaries as described in
-`ORCHESTRATION.md`.
+and perform the repository's normal Git and pull-request steps, including the
+repository-prescribed merge after all required validation, CI, and independent
+review gates pass. Do not ask the user to choose an agent role or separately
+approve each routine lifecycle step. Role selection and delegation are internal
+workflow decisions. The coordinator retains ownership of Git and workspace
+boundaries as described in `ORCHESTRATION.md`.
 
 This authorization is bounded by the named issue, the instruction precedence
-above, and the consuming project's policies. It does not expand destructive,
-release, deployment, merge, credential, or other separately controlled
-authority. Requests that are not issue handoffs remain governed by their own
-wording; they are not silently converted into the full issue lifecycle.
+above, and the consuming project's policies. Higher-priority consuming policy
+may require separate human approval for merge, in which case the coordinator
+must stop at that gate. The handoff does not authorize unrelated or destructive
+work, release, deployment, publication, credential changes, or other separately
+controlled actions. Requests that are not issue handoffs remain governed by
+their own wording; they are not silently converted into the full issue
+lifecycle.
 
 ## Roles
 
