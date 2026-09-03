@@ -20,6 +20,30 @@ project's architecture, commands, CI names, or release rules.
 Project instructions may explicitly specialize the shared defaults. Direct user
 instructions remain higher priority than both.
 
+Before delegating from a consuming repository, run a preflight in the worktree
+that will contain the change. For example, for an isolated worktree and the
+recommended submodule path:
+
+```sh
+git worktree add ../consumer-issue-123 -b codex/issue-123
+git -C ../consumer-issue-123 submodule update --init --recursive -- .agent-workflow
+git -C ../consumer-issue-123 submodule status -- .agent-workflow
+git -C ../consumer-issue-123 rev-parse HEAD:.agent-workflow
+git -C ../consumer-issue-123/.agent-workflow rev-parse HEAD
+test -f ../consumer-issue-123/.agent-workflow/AGENTS.md
+test -f ../consumer-issue-123/.agent-workflow/IMPLEMENTATION_AGENT.md
+test -f ../consumer-issue-123/.agent-workflow/REVIEW_AGENT.md
+test -f ../consumer-issue-123/.agent-workflow/CONTEXT_MANAGEMENT.md
+test -f ../consumer-issue-123/.agent-workflow/HANDOFF.md
+```
+
+The submodule status and `HEAD` must identify the exact gitlink commit recorded
+by the consuming repository. Also verify that the protocol files required by
+the delegated roles exist; see the coordinator preflight in
+`ORCHESTRATION.md`. If the directory is empty, the scoped `submodule update`
+above is the normal recovery step rather than a reason to bypass the pinned
+revision.
+
 ## Update the pinned workflow
 
 Fetch the submodule, check out the reviewed tag or commit, validate the consuming
