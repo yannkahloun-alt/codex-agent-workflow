@@ -40,6 +40,50 @@ repeat affected validation, and obtain a fresh independent review of the new
 exact head before merging. Refresh the source-of-truth state immediately before
 merge so a stale verdict or newly failing gate cannot be treated as sufficient.
 
+### Independent-review generations
+
+Launching and consuming independent review must be idempotent for the review
+generation key `(authoritative repository identity, pull-request number, exact
+40-character head commit)`. Use the hosting service's immutable repository ID
+when available, otherwise the consumer-defined canonical repository locator.
+Resolve all three values from the source of truth;
+display names, branch names, abbreviated commits, task titles, and prompt text
+are not identity. Record the key as stable task or lifecycle metadata that can
+be queried after restart, together with the review task's stable identifier,
+status, and verdict or findings. A task title may aid people but must never be
+used to select or deduplicate a review.
+
+Before launching, reconcile recorded review tasks for the key. The durable
+lifecycle record for that key is the authoritative generation. When one task
+exists, resume or await it instead of launching another. When none exists,
+durably claim the generation, create one fresh independent reviewer, and record
+its stable identity before treating dispatch as complete. If a claim, create,
+dispatch, list, or status operation has an uncertain result,
+do not infer absence and create again: repeat source-of-truth reconciliation
+with the same key until the existing task is found or absence is authoritative.
+This rule applies after coordinator or host restart as well as an in-process
+retry. A changed exact head produces a different key and requires exactly one
+fresh reviewer; tasks and verdicts for earlier heads remain historical evidence
+and cannot satisfy the new generation.
+
+If reconciliation discovers multiple tasks for the same key, keep the durable
+generation record authoritative and select its recorded task (or, for a legacy
+record, the task with the earliest durable creation timestamp) for operational
+continuation, but resolve every known duplicate before deciding the gate. Do
+not launch another task. Aggregate their results conservatively: any finding,
+rejection, error, cancellation before a verdict, incomplete or unverifiable
+result, or disagreement blocks approval. The generation passes only when every
+known task is resolved and every independently valid verdict approves that
+exact key with no findings. Record the duplicate identities and aggregate
+outcome in the handoff. Consumer policy may archive redundant tasks only after
+their outcomes are captured; title similarity alone never makes a task a known
+duplicate.
+
+The common path remains one reviewer: one task recorded for the key, one
+unambiguous verdict on the exact head, and no unresolved findings. Refresh the
+pull request head and reconcile the key once more immediately before treating
+that verdict as a merge gate.
+
 Higher-priority consuming policy may require separate human merge approval. In
 that case, prepare the otherwise merge-ready pull request and stop at the human
 approval gate. Neither form of merge authority includes release, deployment,

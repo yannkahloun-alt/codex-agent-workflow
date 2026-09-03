@@ -153,6 +153,30 @@ findings block merge. Issue-handoff merge authority remains limited to the named
 ticket and does not authorize release, deployment, publication, unrelated work,
 or destructive actions outside guarded normal post-merge cleanup.
 
+Independent review is a restart-safe generation keyed by authoritative
+repository identity, pull-request number, and the exact 40-character head
+commit. Coordinators record and query that key through stable task or lifecycle
+metadata, never a task title. A retry or restart resumes the recorded task for
+the same key. A changed head creates one new generation and one fresh reviewer.
+If a transient create or lookup result is uncertain, reconcile the source of
+truth before creating anything else.
+
+Normally a generation has one reviewer. If concurrent or interrupted work has
+already produced multiple tasks for the same key, launch no more and resolve
+all of them. Any finding, negative verdict, unresolved task, unverifiable
+result, or conflict blocks approval; only unanimously clean, exact-head
+approvals pass. For example, the regression case that motivated this rule is
+BB PR #136 at head `3d56b3128e9cdaa5a702e4eeb2fb57de12e4a7d1`:
+
+```text
+Review key: (BB repository identity, PR 136,
+             3d56b3128e9cdaa5a702e4eeb2fb57de12e4a7d1)
+After restart, query stable lifecycle metadata for this exact key.
+If its review task exists, resume it; do not launch a title-matched replacement.
+If two same-key tasks are already known, await both and aggregate conservatively.
+If PR 136 has a different head, create exactly one fresh keyed generation.
+```
+
 File-only delegation, with Git available only to the coordinator:
 
 > **Coordinator to implementation agent:** In the supplied workspace, edit only
