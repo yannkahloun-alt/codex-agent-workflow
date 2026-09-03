@@ -24,6 +24,23 @@ When started interactively without a task, do not scan the repository. Ask:
 An explicit request—whether or not it refers to an issue—bypasses this default
 and should be followed directly.
 
+## Issue handoff
+
+A prompt such as `work on ticket #N` is sufficient authorization to carry that
+issue through its full repository-defined lifecycle: inspect the issue and
+policy, implement it, validate it, arrange independent review when required,
+and perform the repository's normal Git and pull-request steps. Do not ask the
+user to choose an agent role or separately approve each routine lifecycle step.
+Role selection and delegation are internal workflow decisions. The coordinator
+retains ownership of Git and workspace boundaries as described in
+`ORCHESTRATION.md`.
+
+This authorization is bounded by the named issue, the instruction precedence
+above, and the consuming project's policies. It does not expand destructive,
+release, deployment, merge, credential, or other separately controlled
+authority. Requests that are not issue handoffs remain governed by their own
+wording; they are not silently converted into the full issue lifecycle.
+
 ## Roles
 
 Determine the current role from the request:
