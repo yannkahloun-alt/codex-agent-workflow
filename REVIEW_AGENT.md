@@ -7,7 +7,12 @@ The preferred reviewer is a fresh read-only subagent in the existing ticket
 workspace. Independent context and source-of-truth verification provide the
 review boundary; a second Git worktree is not required. Use a separate task or
 worktree only when the environment cannot provide trustworthy fresh subagent
-isolation or higher-priority consuming policy explicitly requires it.
+isolation or higher-priority consuming policy explicitly requires it. The
+invariant is: `subagent available -> separate review task/thread forbidden`.
+Before a fallback, the coordinator must record the concrete host/tool limitation
+or the stronger policy. A restart, lost ephemeral review state, historical
+practice, uncertainty, or a desire for a durable task does not establish that
+limitation; obtain a fresh exact-head subagent review instead.
 
 The reviewer should:
 

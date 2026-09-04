@@ -45,6 +45,13 @@ controlled actions. Requests that are not issue handoffs remain governed by
 their own wording; they are not silently converted into the full issue
 lifecycle.
 
+For the normal lifecycle, a named ticket owns one implementation pull request.
+Its exact head may change through CI or review fixes, but those changes create
+new validation and review generations on the same pull request, not replacement
+pull requests. A separate workflow-freshness maintenance pull request remains a
+pre-ticket prerequisite and is not the named ticket's implementation pull
+request.
+
 ## Roles
 
 Determine the current role from the request:
