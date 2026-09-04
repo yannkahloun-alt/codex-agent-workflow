@@ -14,7 +14,8 @@ agents or approve routine transitions.
 - create or refine issues when useful, without forcing issue use;
 - decompose and order coherent work units;
 - launch fresh implementation agents in isolated branches or worktrees;
-- launch fresh independent reviewers under project policy;
+- launch fresh read-only review subagents in the ticket workspace by default,
+  or use the documented stronger-isolation fallback under project policy;
 - monitor high-level progress and coordinate follow-up work;
 - retain concise status, decisions, blockers, and handoffs.
 - own the Git and workspace boundary: choose the authoritative checkout,
@@ -47,42 +48,46 @@ generation key `(authoritative repository identity, pull-request number, exact
 40-character head commit)`. Use the hosting service's immutable repository ID
 when available, otherwise the consumer-defined canonical repository locator.
 Resolve all three values from the source of truth;
-display names, branch names, abbreviated commits, task titles, and prompt text
-are not identity. Record the key as stable task or lifecycle metadata that can
-be queried after restart, together with the review task's stable identifier,
-status, and verdict or findings. A task title may aid people but must never be
-used to select or deduplicate a review.
+display names, branch names, abbreviated commits, execution titles, and prompt
+text are not identity. Record the key in normal lifecycle or handoff state with
+the verdict or findings and, when the host exposes one, the stable review
+execution identifier. The execution identifier may identify a subagent or a
+separate fallback task; it is supporting evidence, not the generation key.
 
-Before launching, reconcile recorded review tasks for the key. The durable
-lifecycle record for that key is the authoritative generation. When one task
-exists, resume or await it instead of launching another. When none exists,
-durably claim the generation, create one fresh independent reviewer, and record
-its stable identity before treating dispatch as complete. If a claim, create,
-dispatch, list, or status operation has an uncertain result,
-do not infer absence and create again: repeat source-of-truth reconciliation
-with the same key until the existing task is found or absence is authoritative.
-This rule applies after coordinator or host restart as well as an in-process
-retry. A changed exact head produces a different key and requires exactly one
-fresh reviewer; tasks and verdicts for earlier heads remain historical evidence
-and cannot satisfy the new generation.
+Prefer one fresh, read-only review subagent operating in the existing ticket
+workspace. Freshness means a new agent and context that did not implement the
+change or inherit the implementer's conclusions as facts. It does not require
+a separate Git worktree. The reviewer resolves the authoritative repository,
+pull request, and exact head from the source of truth and must not change files.
+Use a separate task and, when needed, a separate worktree only when the host
+cannot provide trustworthy fresh subagent isolation or when higher-priority
+consumer policy explicitly requires stronger isolation. Implementation-ticket
+worktree rules are unchanged.
 
-If reconciliation discovers multiple tasks for the same key, keep the durable
-generation record authoritative and select its recorded task (or, for a legacy
-record, the task with the earliest durable creation timestamp) for operational
-continuation, but resolve every known duplicate before deciding the gate. Do
-not launch another task. Aggregate their results conservatively: any finding,
-rejection, error, cancellation before a verdict, incomplete or unverifiable
-result, or disagreement blocks approval. The generation passes only when every
-known task is resolved and every independently valid verdict approves that
-exact key with no findings. Record the duplicate identities and aggregate
-outcome in the handoff. Consumer policy may archive redundant tasks only after
-their outcomes are captured; title similarity alone never makes a task a known
-duplicate.
+Before dispatch, reconcile any recoverable lifecycle state for the key. If an
+accepted exact-head verdict is authoritative and complete, reuse it. If a
+matching review execution is still authoritatively addressable, resume or await
+it. An ephemeral subagent need not have a durable host-level task object: if a
+coordinator restart, uncertain dispatch, or lost execution state leaves no
+authoritative recoverable verdict for the key, launch a fresh read-only
+subagent review of the current exact head. Never infer approval, and never
+create a review worktree merely to make the execution durable.
 
-The common path remains one reviewer: one task recorded for the key, one
-unambiguous verdict on the exact head, and no unresolved findings. Refresh the
-pull request head and reconcile the key once more immediately before treating
-that verdict as a merge gate.
+Duplicate read-only reviews caused by conservative recovery are acceptable.
+Record any known execution identifiers and aggregate their outcomes
+conservatively: any finding, rejection, error, incomplete or unverifiable
+result, or disagreement blocks approval. Approval requires an independently
+valid, unambiguous verdict for the exact key and no unresolved result known for
+that generation. For the separate-task fallback, use durable claim and task
+reconciliation when the host supports them; an uncertain create or lookup must
+be reconciled before another fallback task is created.
+
+A changed exact head produces a new generation, invalidates every earlier
+verdict, and requires a fresh independent reviewer. After fixes, make them in
+the same ticket worktree, repeat affected validation, and dispatch a fresh
+review subagent for the new key. Refresh the pull-request head and reconcile
+the current key once more immediately before treating its verdict as a merge
+gate.
 
 Higher-priority consuming policy may require separate human merge approval. In
 that case, prepare the otherwise merge-ready pull request and stop at the human

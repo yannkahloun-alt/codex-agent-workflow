@@ -53,7 +53,8 @@ Determine the current role from the request:
   `ORCHESTRATION.md`.
 - A fresh agent assigned a coherent implementation unit follows
   `IMPLEMENTATION_AGENT.md`.
-- A fresh independent agent assigned a review follows `REVIEW_AGENT.md`.
+- A fresh independent agent assigned a review—normally a read-only subagent in
+  the ticket workspace—follows `REVIEW_AGENT.md`.
 
 All roles follow `CONTEXT_MANAGEMENT.md` and `HANDOFF.md` where applicable.
 

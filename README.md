@@ -153,28 +153,29 @@ findings block merge. Issue-handoff merge authority remains limited to the named
 ticket and does not authorize release, deployment, publication, unrelated work,
 or destructive actions outside guarded normal post-merge cleanup.
 
-Independent review is a restart-safe generation keyed by authoritative
-repository identity, pull-request number, and the exact 40-character head
-commit. Coordinators record and query that key through stable task or lifecycle
-metadata, never a task title. A retry or restart resumes the recorded task for
-the same key. A changed head creates one new generation and one fresh reviewer.
-If a transient create or lookup result is uncertain, reconcile the source of
-truth before creating anything else.
+Independent review is a generation keyed by authoritative repository identity,
+pull-request number, and the exact 40-character head commit. The normal
+execution is a fresh read-only subagent in the ticket workspace, not a separate
+review task or worktree. Coordinators carry the key and exact-head verdict in
+normal lifecycle state, plus a review execution identifier when available. A
+changed head creates a new generation and requires a fresh reviewer.
 
-Normally a generation has one reviewer. If concurrent or interrupted work has
-already produced multiple tasks for the same key, launch no more and resolve
-all of them. Any finding, negative verdict, unresolved task, unverifiable
-result, or conflict blocks approval; only unanimously clean, exact-head
-approvals pass. For example, the regression case that motivated this rule is
-BB PR #136 at head `3d56b3128e9cdaa5a702e4eeb2fb57de12e4a7d1`:
+After a retry or restart, resume an authoritatively recoverable matching
+execution or verdict. If ephemeral subagent state cannot be recovered, run a
+fresh exact-head review; never infer approval or create a review worktree merely
+for durability. Duplicate recovery reviews are handled conservatively: any
+finding, failure, unresolved or unverifiable result, or conflict blocks
+approval. A separate task/worktree is reserved for environments without
+trustworthy fresh subagents or for stronger consuming policy. For example:
 
 ```text
 Review key: (BB repository identity, PR 136,
              3d56b3128e9cdaa5a702e4eeb2fb57de12e4a7d1)
 After restart, query stable lifecycle metadata for this exact key.
-If its review task exists, resume it; do not launch a title-matched replacement.
-If two same-key tasks are already known, await both and aggregate conservatively.
-If PR 136 has a different head, create exactly one fresh keyed generation.
+If its exact-head verdict or execution is recoverable, reuse or resume it.
+If ephemeral execution state is lost, dispatch a fresh read-only subagent.
+If two same-key results are known, aggregate them conservatively.
+If PR 136 has a different head, dispatch a fresh reviewer for the new generation.
 ```
 
 File-only delegation, with Git available only to the coordinator:
