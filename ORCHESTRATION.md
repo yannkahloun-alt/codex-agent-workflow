@@ -35,6 +35,38 @@ policy must permit agent-driven merge. Failed or incomplete checks,
 unverifiable evidence, merge conflicts, or unresolved review findings block the
 merge and must be reported rather than bypassed.
 
+## Deterministic implementation pull-request lifecycle
+
+The invariant is: `named ticket -> one implementation PR`. Before creating a
+ticket PR, reconcile its existing implementation PR state from the hosting
+service. After the coherent implementation is inspected, commit and push it,
+then create or reconcile that single PR as a draft so the consumer's
+authoritative CI validates the exact head. Do not require CI-equivalent local
+quality gates before the draft PR exists.
+
+When a consuming repository has an equivalent required CI gate, routine
+automated tests, lint, formatting, static analysis, coverage, mutation testing,
+and equivalent quality work are CI-owned. An implementation agent must not run
+them locally merely because the command is documented. Local automated checks
+remain allowed only when higher-priority consumer policy or direct user
+instruction identifies a genuinely CI-unavailable check, such as a required
+private fixture, hardware, OS, credential, license, or explicit diagnostic.
+Adding or updating regression tests remains implementation work.
+
+Record the PR number once created. CI failures, implementation fixes, reviewer
+findings, restarts, readiness changes, and new exact-head review generations
+all reuse that PR. A changed head creates a new CI/review generation, not a new
+implementation PR. If the PR was accidentally closed, reopen it when safely
+possible. If it genuinely cannot continue, stop and report the concrete
+host/repository limitation; never silently create a replacement. The dedicated
+workflow-freshness bump PR remains a pre-ticket maintenance exception and is
+not the named ticket's implementation PR.
+
+For routine authorized PR lifecycle operations, prefer an approved authenticated
+non-interactive CLI, API, or connector path. Use host/UI only when that path is
+unavailable; respect any platform confirmation or security control and never
+bypass it.
+
 Tie the independent-review verdict to the pull request's exact head commit.
 After any implementation change or new commit, invalidate the earlier verdict,
 repeat affected validation, and obtain a fresh independent review of the new
@@ -59,10 +91,14 @@ workspace. Freshness means a new agent and context that did not implement the
 change or inherit the implementer's conclusions as facts. It does not require
 a separate Git worktree. The reviewer resolves the authoritative repository,
 pull request, and exact head from the source of truth and must not change files.
-Use a separate task and, when needed, a separate worktree only when the host
-cannot provide trustworthy fresh subagent isolation or when higher-priority
-consumer policy explicitly requires stronger isolation. Implementation-ticket
-worktree rules are unchanged.
+The invariant is: `subagent available -> separate review task/thread forbidden`.
+Use a separate task and, when needed, a separate worktree only after recording
+a concrete host/tool limitation that prevents trustworthy fresh subagent
+isolation, or when higher-priority consumer policy explicitly requires stronger
+isolation. Historical practice, uncertainty, restart, lost ephemeral review
+state, or a desire for durability are not limitations. In those cases, dispatch
+a fresh read-only exact-head subagent review. Implementation-ticket worktree
+rules are unchanged.
 
 Before dispatch, reconcile any recoverable lifecycle state for the key. If an
 accepted exact-head verdict is authoritative and complete, reuse it. If a

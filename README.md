@@ -116,6 +116,46 @@ Published tags identify stable workflow revisions. Consumers remain exactly
 pinned while the pre-ticket lifecycle validates, reviews, and commits any
 approved update.
 
+## Deterministic ticket lifecycle
+
+For a normal named ticket, the workflow uses one implementation branch/worktree
+and one implementation pull request:
+
+```text
+implement coherent change -> inspect workspace/diff -> commit + push
+-> create or reconcile ONE draft PR -> authoritative CI validates exact head
+-> fix on SAME branch / SAME PR as needed -> exact-head CI green
+-> mark SAME PR ready -> fresh read-only subagent review
+-> fix findings on SAME branch / SAME PR -> new exact-head CI + review
+-> guarded merge of SAME PR -> cleanup
+```
+
+`named ticket -> one implementation PR`: a changed head is a new CI/review
+generation, never a reason to create a replacement PR. Reopen an accidentally
+closed PR when safely possible; otherwise report the concrete limitation. A
+workflow-pin bump PR is a distinct pre-ticket maintenance prerequisite.
+
+Where equivalent required CI exists, CI owns routine automated quality gates.
+Implementation still adds regression coverage and inspects the change, but does
+not run the equivalent test, lint, static-analysis, coverage, mutation, or
+format gate locally before opening the draft PR. Higher-priority policy or a
+direct user instruction may require a genuinely CI-unavailable local check.
+
+Independent review is also deterministic:
+
+```text
+subagent available -> separate review task/thread forbidden
+```
+
+Use a fresh read-only subagent in the existing ticket workspace. A separate
+task or worktree is a fallback only after recording a concrete host/tool
+limitation or when stronger consumer policy requires it. Lost review state
+requires a fresh exact-head subagent review, not a durable replacement task.
+
+Routine authorized PR operations prefer an approved authenticated
+non-interactive CLI/API/connector path; use host/UI only when necessary and
+never bypass host/platform security controls.
+
 ## Issue handoff examples
 
 End to end, with Git available:

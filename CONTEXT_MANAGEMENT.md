@@ -4,7 +4,8 @@ Context isolation is a correctness tool as well as a cost control.
 
 - Start independent implementation units and reviews with fresh context.
 - Prefer a fresh read-only review subagent in the ticket workspace; context
-  isolation does not by itself require a separate task or worktree.
+  isolation does not by itself require a separate task or worktree. When that
+  subagent is available, a separate review task or thread is forbidden.
 - Give agents the task, repository, acceptance criteria, and required policy;
   do not preload another agent's reasoning as trusted evidence.
 - Inspect repository areas relevant to the assigned work rather than scanning
