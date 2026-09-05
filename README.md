@@ -120,15 +120,18 @@ approved update.
 
 For a normal named ticket, the workflow uses one implementation branch and one
 implementation pull request. A verified authoritative local worktree is the
-preferred/default execution mode. When no such worktree is available to the
+preferred/default execution mode and performs the initial commit, push, and
+draft-PR creation or reconciliation. When no such worktree is available to the
 executing role, a consuming repository may permit the tightly guarded
-remote-GitHub fallback in `IMPLEMENTATION_AGENT.md`; it reuses the same branch
-and PR and preserves the same exact-head CI and review gates:
+remote-GitHub fallback in `IMPLEMENTATION_AGENT.md` only for a scoped update to
+an already-existing authoritative ticket PR and its existing non-base branch.
+Remote mode never establishes the initial branch or PR, and it preserves the
+same exact-head CI and review gates:
 
 ```text
 implement coherent change -> inspect workspace/diff -> commit + push (local)
-or guarded GitHub API write (remote)
 -> create or reconcile ONE draft PR -> authoritative CI validates exact head
+-> guarded GitHub API write (remote, existing PR/branch only) as needed
 -> fix on SAME branch / SAME PR as needed -> exact-head CI green
 -> mark SAME PR ready -> fresh read-only subagent review
 -> fix findings on SAME branch / SAME PR -> new exact-head CI + review

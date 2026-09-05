@@ -59,11 +59,17 @@ merge and must be reported rather than bypassed.
 
 The invariant is: `named ticket -> one implementation PR`. Before creating a
 ticket PR, reconcile its existing implementation PR state from the hosting
-service. After the coherent implementation is inspected, commit and push it in
-local mode, or perform the guarded remote write in remote-GitHub mode, then
-create or reconcile that single PR as a draft so the consumer's authoritative
-CI validates the exact head. Do not require CI-equivalent local quality gates
-before the draft PR exists.
+service. Only local authoritative-worktree mode may establish the initial
+ticket branch and implementation PR: after the coherent implementation is
+inspected, commit and push it locally, then create or reconcile that single PR
+as a draft so the consumer's authoritative CI validates the exact head. Do not
+require CI-equivalent local quality gates before the draft PR exists.
+
+Remote-GitHub mode is available only after authoritative reconciliation proves
+that the named ticket already has its single implementation PR and existing
+non-base ticket branch. It may make only a guarded, scoped update to that
+existing branch and PR; it never establishes the initial branch or PR, and it
+never creates a replacement PR.
 
 When a consuming repository has an equivalent required CI gate, routine
 automated tests, lint, formatting, static analysis, coverage, mutation testing,
