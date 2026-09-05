@@ -9,6 +9,12 @@ Include:
   and exact revision when applicable; state whether the authoritative CI
   generation for that exact head has passed, failed, is pending, or is
   unavailable;
+- the execution mode (verified local authoritative worktree or remote-GitHub),
+  repository identity, issue number, base branch, pinned workflow revision, and
+  scoped requested change; for remote mode, include pre-write and resulting
+  full 40-character heads, each updated target path with its verified blob SHA,
+  expected/observed head transition, and post-write commit/file/full-diff scope
+  inspection;
 - for independent review, the repository identity, pull-request number, full
   40-character head commit, verdict or findings, review execution identity when
   available, and any known same-generation duplicate executions with their
