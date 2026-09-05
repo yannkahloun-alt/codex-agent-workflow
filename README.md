@@ -118,12 +118,20 @@ approved update.
 
 ## Deterministic ticket lifecycle
 
-For a normal named ticket, the workflow uses one implementation branch/worktree
-and one implementation pull request:
+For a normal named ticket, the workflow uses one implementation branch and one
+implementation pull request. A verified authoritative local worktree is the
+preferred/default execution mode and performs the initial commit, push, and
+draft-PR creation or reconciliation. When no such worktree is available to the
+executing role, a consuming repository may permit the tightly guarded
+remote-GitHub fallback in `IMPLEMENTATION_AGENT.md` only for a scoped update to
+an already-existing authoritative ticket PR and its existing non-base branch.
+Remote mode never establishes the initial branch or PR, and it preserves the
+same exact-head CI and review gates:
 
 ```text
-implement coherent change -> inspect workspace/diff -> commit + push
+implement coherent change -> inspect workspace/diff -> commit + push (local)
 -> create or reconcile ONE draft PR -> authoritative CI validates exact head
+-> guarded GitHub API write (remote, existing PR/branch only) as needed
 -> fix on SAME branch / SAME PR as needed -> exact-head CI green
 -> mark SAME PR ready -> fresh read-only subagent review
 -> fix findings on SAME branch / SAME PR -> new exact-head CI + review
@@ -232,6 +240,16 @@ If neither workspace has Git metadata, the same delegation remains file-only.
 The coordinator records the directory boundary, inspects the changed files or a
 before/after comparison, reports validation, and hands off the files while
 stating that branch, commit, push, and pull-request steps were unavailable.
+
+When authenticated GitHub API writes are available but an authoritative local
+worktree is not, do not treat the missing worktree as an unconditional dead
+end. Use remote mode only after verifying repository/issue/PR identity, the
+existing non-base ticket branch, the pinned workflow revision, the current
+40-character PR head, and each target blob SHA. Re-check head and blob SHA
+immediately before every replacement; never force, rewind refs, write a base or
+protected branch, or create a replacement PR. Inspect the resulting commit,
+file, and full PR diff. Any head change requires fresh CI and independent
+review for that exact new head.
 
 ## Post-merge cleanup examples
 

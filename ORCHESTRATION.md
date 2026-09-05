@@ -25,6 +25,26 @@ agents or approve routine transitions.
 - keep delegated agents' write scope explicit and do not imply that a
   file-editing assignment transfers repository or Git ownership.
 
+## Implementation execution mode and immutable blockers
+
+Use a verified authoritative local worktree whenever one is available; it is
+the default execution mode. Its absence in a particular worker is not by
+itself evidence that no authoritative local worktree exists, so first reconcile
+the coordinator's recorded worktree identity and current capabilities. If none
+is available to the executing role, the coordinator may select the
+remote-GitHub mode in `IMPLEMENTATION_AGENT.md` only when the consuming
+repository permits it and every stated remote precondition can be verified.
+
+Treat a reported environment limitation as immutable when it concerns the
+worker's fixed execution capabilities (for example, no mounted checkout or no
+Git metadata), and the coordinator has no evidence that a new worker would
+receive different capabilities or a different execution mode. Do not redispatch
+an equivalent worker into that same limitation. Record the evidence and either
+switch to safe remote-GitHub mode or stop blocked. A work-state blocker is
+recoverable only when authoritative evidence identifies a changed condition,
+such as a now-accessible verified worktree, a capability grant, or reconciled
+repository/PR state; record that evidence before a retry.
+
 ## Guarded ticket merge
 
 An issue handoff such as `work on ticket #N` authorizes the coordinator to
@@ -39,10 +59,17 @@ merge and must be reported rather than bypassed.
 
 The invariant is: `named ticket -> one implementation PR`. Before creating a
 ticket PR, reconcile its existing implementation PR state from the hosting
-service. After the coherent implementation is inspected, commit and push it,
-then create or reconcile that single PR as a draft so the consumer's
-authoritative CI validates the exact head. Do not require CI-equivalent local
-quality gates before the draft PR exists.
+service. Only local authoritative-worktree mode may establish the initial
+ticket branch and implementation PR: after the coherent implementation is
+inspected, commit and push it locally, then create or reconcile that single PR
+as a draft so the consumer's authoritative CI validates the exact head. Do not
+require CI-equivalent local quality gates before the draft PR exists.
+
+Remote-GitHub mode is available only after authoritative reconciliation proves
+that the named ticket already has its single implementation PR and existing
+non-base ticket branch. It may make only a guarded, scoped update to that
+existing branch and PR; it never establishes the initial branch or PR, and it
+never creates a replacement PR.
 
 When a consuming repository has an equivalent required CI gate, routine
 automated tests, lint, formatting, static analysis, coverage, mutation testing,
@@ -120,8 +147,9 @@ be reconciled before another fallback task is created.
 
 A changed exact head produces a new generation, invalidates every earlier
 verdict, and requires a fresh independent reviewer. After fixes, make them in
-the same ticket worktree, repeat affected validation, and dispatch a fresh
-review subagent for the new key. Refresh the pull-request head and reconcile
+the same ticket worktree in local mode or through the guarded remote protocol
+in remote-GitHub mode, repeat affected validation, and dispatch a fresh review
+subagent for the new key. Refresh the pull-request head and reconcile
 the current key once more immediately before treating its verdict as a merge
 gate.
 
@@ -226,8 +254,11 @@ metadata, the coordinator remains responsible for repository state:
   it into the coordinator's authoritative checkout if the workspaces are not
   shared, and perform all status, diff, validation, commit, push, and
   pull-request operations there.
-- If no Git metadata exists anywhere, do not invent branch, commit, or
-  pull-request evidence. Establish an explicit directory boundary, have the
+- If no authoritative local Git metadata is available to perform the write,
+  first determine whether remote-GitHub mode is permitted and all its
+  preconditions can be proven. If so, retain coordinator ownership and use its
+  exact-head/blob-SHA protocol. If not, do not invent branch, commit, or
+  pull-request evidence: establish an explicit directory boundary, have the
   delegated agent report every changed file and validation result, inspect the
   resulting files or a before/after comparison, and hand off the file changes
   with Git lifecycle steps clearly marked unavailable for the next owner.
@@ -236,9 +267,10 @@ In either case, delegated agents must not initialize a repository, select a
 different checkout, or claim Git completion unless the coordinator explicitly
 transfers that authority under higher-priority project policy.
 
-## Ticket worktree placement and ownership
+## Local ticket worktree placement and ownership
 
-Create ticket worktrees outside the primary repository working tree by default,
+When local mode is selected, create ticket worktrees outside the primary
+repository working tree by default,
 for example as a sibling directory or under another coordinator-managed
 external root. The path need not follow a particular naming convention. The
 invariant is that it is not beneath the primary checkout unless higher-priority
@@ -246,7 +278,7 @@ repository or environment policy explicitly requires that layout. Creating the
 worktree must not by itself introduce untracked state into the primary
 checkout.
 
-At creation time, retain lifecycle state that ties the resource to the ticket:
+At local-worktree creation time, retain lifecycle state that ties the resource to the ticket:
 
 - the ticket or issue identity;
 - the exact absolute worktree path;
@@ -266,9 +298,10 @@ associated with an unexpected branch.
 
 After a pull request merges successfully, the coordinator must explicitly
 follow the merge with an attempt to clean up only the local branch and worktree
-created for that ticket. Cleanup is a separate post-merge step: a cleanup
-failure does not undo or change the reported merge result, but its exact state
-and required follow-up belong in the final handoff.
+created for that ticket. Remote-GitHub mode creates no local cleanup resource;
+record that fact rather than inventing one. Cleanup is a separate post-merge
+step: a cleanup failure does not undo or change the reported merge result, but
+its exact state and required follow-up belong in the final handoff.
 
 Before deleting anything, verify from the repository's source of truth that the
 pull request merged and that the ticket branch's work is present in the
